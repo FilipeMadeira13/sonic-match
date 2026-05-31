@@ -1,0 +1,23 @@
+{
+  "home": {
+    "title": "Discover your next favorite album",
+    "subtitle": "Tell us what you love. We'll find the rest.",
+    "form": {
+      "searchPlaceholder": "Search for album or artist...",
+      "freeTextPlaceholder": "Anything else you'd like me to know? (optional)",
+      "submitButton": "Discover albums",
+      "submitLoading": "Analyzing your taste...",
+      "minAlbumsError": "Add at least one album to continue.",
+      "requestError": "Something went wrong. Please try again.",
+      "noResults": "No albums found.",
+      "searchError": "Search error. Please try again.",
+      "hint": "Add at least 1 album to get started.",
+      "countLabel": "How many albums to recommend"
+    },
+    "results": {
+      "title": "albums recommended for you",
+      "newSearch": "New search",
+      "loadingMore": "Generating more albums..."
+    }
+  }
+}

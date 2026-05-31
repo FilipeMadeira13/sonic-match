@@ -1,0 +1,23 @@
+{
+  "home": {
+    "title": "Descubra seu próximo álbum favorito",
+    "subtitle": "Conte-nos o que você ama. Nós encontramos o resto.",
+    "form": {
+      "searchPlaceholder": "Buscar álbum ou artista...",
+      "freeTextPlaceholder": "Alguma coisa a mais que você quer que eu saiba? (opcional)",
+      "submitButton": "Descobrir álbuns",
+      "submitLoading": "Analisando seu gosto...",
+      "minAlbumsError": "Adicione pelo menos um álbum para continuar.",
+      "requestError": "Algo deu errado. Tente novamente.",
+      "noResults": "Nenhum álbum encontrado.",
+      "searchError": "Erro ao buscar. Tente novamente.",
+      "hint": "Adicione pelo menos 1 álbum para começar.",
+      "countLabel": "Quantos álbuns recomendar"
+    },
+    "results": {
+      "title": "álbuns recomendados para você",
+      "newSearch": "Nova busca",
+      "loadingMore": "Gerando mais álbuns..."
+    }
+  }
+}
