@@ -9,23 +9,53 @@ function buildSystemPrompt(
   similarArtists: SimilarArtist[],
   albumTagContexts: AlbumTagContext[]
 ): string {
-  // PRIMARY: album-level sonic profile from Last.fm tags
-  const tagSection =
-    albumTagContexts.length > 0
-      ? `\n⚠️ PERFIL SONORO DOS ÁLBUNS SEED (tags da comunidade Last.fm — descrevem a SONORIDADE REAL de cada álbum, NÃO o estilo geral do artista):
-${albumTagContexts
-  .map((ctx, i) => `${i + 1}. "${ctx.album}" de ${ctx.artist} → ${ctx.tags.join(', ')}`)
-  .join('\n')}
+  let tagSection = '';
+  if (albumTagContexts.length > 0) {
+    const albumLines = albumTagContexts.map((ctx, i) => {
+      const tagStr = ctx.tags
+        .slice(0, 6)
+        .map((t) => `${t.name} [${t.weight}]`)
+        .join(' · ');
 
-REGRA CRÍTICA: Um álbum pode soar completamente diferente do estilo geral do artista.
-Exemplo: "Chameleon" de Helloween é AOR/melodic-rock — nada a ver com o power metal típico da banda.
-As tags acima definem O QUE REALMENTE SONA nesses álbuns. Usá-las é OBRIGATÓRIO como guia principal.\n`
-      : '';
+      const artistTagSet = new Set(ctx.artistTags.map((t) => t.toLowerCase()));
+      const exclusiveTags = ctx.tags
+        .filter((t) => !artistTagSet.has(t.name.toLowerCase()))
+        .slice(0, 4)
+        .map((t) => t.name);
 
-  // SECONDARY: artist-level similarity (lower priority)
+      const artistLine =
+        ctx.artistTags.length > 0
+          ? `\n   Estilo geral do artista: ${ctx.artistTags.slice(0, 5).join(', ')}`
+          : '';
+      const exclusiveLine =
+        exclusiveTags.length > 0
+          ? `\n   ⚡ Exclusivo deste álbum: ${exclusiveTags.join(', ')}`
+          : '';
+
+      return `${i + 1}. "${ctx.album}" — ${ctx.artist}${ctx.year ? ` (${ctx.year})` : ''}
+   Sonoridade: ${tagStr}${artistLine}${exclusiveLine}`;
+    });
+
+    tagSection = `
+⚠️ PERFIL SONORO DOS ÁLBUNS SEED
+
+Sonoridade REAL de cada álbum, via tags ponderadas da comunidade Last.fm.
+Peso [N] = intensidade relativa da característica (100 = tag mais forte do álbum).
+
+${albumLines.join('\n\n')}
+
+REGRAS CRÍTICAS DE ANÁLISE:
+• Tags com peso ≥ 60 definem a identidade sonora central do álbum.
+• Tags ⚡ "Exclusivo deste álbum" são as mais diferenciadoras — priorize-as para encontrar álbuns realmente similares.
+• NUNCA use o nome do artista como proxy da sonoridade. Cada álbum tem identidade própria.
+  Exemplo: "Tattooed Millionaire" de Bruce Dickinson é AOR/hard rock, NÃO heavy metal — mesmo ele sendo vocalista do Iron Maiden.
+• Tags com peso < 25 são contexto periférico, não identidade central.
+`;
+  }
+
   const similarSection =
     similarArtists.length > 0
-      ? `\nContexto secundário (artistas similares via Last.fm — use apenas se combinarem com o perfil sonoro das tags acima):
+      ? `\nArtistas similares via Last.fm (contexto secundário — use apenas se consonantes com as tags acima):
 ${similarArtists
   .slice(0, 15)
   .map((a) => `- ${a.name} (${a.match.toFixed(2)})`)
@@ -35,7 +65,7 @@ ${similarArtists
   return `Você é um especialista em música com conhecimento enciclopédico de álbuns de todos os gêneros, épocas e culturas. Sua função é analisar o perfil de gosto musical de um usuário — baseado nos álbuns que ele ama — e recomendar exatamente ${count} álbuns que ele provavelmente ainda não conhece, mas vai amar.
 ${tagSection}${similarSection}
 Regras para as recomendações:
-- PRIORIDADE 1: Respeite o perfil sonoro das tags acima. Recomende álbuns que tenham o MESMO TIPO DE SONORIDADE descrita pelas tags.
+- PRIORIDADE MÁXIMA: respeite a sonoridade real de cada álbum seed conforme o perfil de tags acima. Cada álbum tem sua identidade sonora própria — não generalize pelo artista, generalize pela sonoridade.
 - Analise profundamente: estética sonora, produção, mood, influências, época, cultura de origem.
 - PROIBIDO: recomendar os álbuns mais óbvios e onipresentes (ex: Dark Side of the Moon, OK Computer, Abbey Road) a não ser que as tags apontem diretamente para isso.
 - Priorize: joias pouco conhecidas, clássicos underground, lançamentos de países não-anglófonos.
