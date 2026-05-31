@@ -2,6 +2,8 @@
 
 App de recomendação de álbuns musicais via IA. Informe álbuns que você ama e receba sugestões personalizadas geradas por inteligência artificial, exibidas como cards visuais com capa, artista, nome e justificativa da recomendação.
 
+Link: (https://sonic-match-iota.vercel.app/)
+
 ## Funcionalidades
 
 - Busca e seleção de álbuns favoritos para montar seu perfil de gosto
