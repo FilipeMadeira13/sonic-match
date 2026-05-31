@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { streamRecommendations } from '@/lib/claude';
+import { streamRecommendations, synthesizeTasteDNA } from '@/lib/claude';
 import { getSimilarArtists, getAlbumTagContexts } from '@/lib/lastfm';
 import type { MBRelease } from '@/types/album';
 
@@ -23,12 +23,13 @@ export async function POST(req: NextRequest): Promise<Response> {
     return Response.json({ error: 'Maximum 10 albums allowed' }, { status: 400 });
   }
 
-  // Fetch both Last.fm signals in parallel — minimal latency impact
+  // Fetch Last.fm signals and synthesize taste DNA in parallel — no extra latency
   const apiKey = process.env.LASTFM_API_KEY ?? '';
   const seedArtists = [...new Set(albums.map((a) => a.artist))];
-  const [similarArtists, albumTagContexts] = await Promise.all([
+  const [similarArtists, albumTagContexts, tasteDNA] = await Promise.all([
     getSimilarArtists(seedArtists, apiKey),
     getAlbumTagContexts(albums, apiKey),
+    synthesizeTasteDNA(albums),
   ]);
 
   const encoder = new TextEncoder();
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     new ReadableStream({
       async start(controller) {
         try {
-          for await (const rec of streamRecommendations(albums, count, freeText, similarArtists, albumTagContexts)) {
+          for await (const rec of streamRecommendations(albums, count, freeText, similarArtists, albumTagContexts, tasteDNA)) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify(rec)}\n\n`));
           }
         } catch (err) {
