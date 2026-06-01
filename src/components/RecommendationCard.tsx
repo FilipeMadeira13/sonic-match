@@ -35,6 +35,59 @@ const STREAMING_PLATFORMS = [
   { key: 'tidal' as const, label: 'Ouvir no Tidal', Icon: TidalIcon },
 ];
 
+// URI schemes to open native apps; undefined = use HTTPS Universal Link directly
+const APP_SCHEMES: Partial<Record<keyof StreamingLinks, (q: string) => string>> = {
+  spotify: (q) => `spotify:search:${encodeURIComponent(q)}`,
+  tidal: (q) => `tidal://search?q=${encodeURIComponent(q)}`,
+  deezer: (q) => `deezer://search?q=${encodeURIComponent(q)}`,
+};
+
+function openStreamingLink(
+  service: keyof StreamingLinks,
+  webUrl: string,
+  searchQuery: string
+) {
+  const buildScheme = APP_SCHEMES[service];
+
+  if (!buildScheme) {
+    // Apple Music and YouTube Music: HTTPS Universal Links work natively on mobile/macOS
+    window.open(webUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  const scheme = buildScheme(searchQuery);
+  let done = false;
+
+  const finish = (openWeb: boolean) => {
+    if (done) return;
+    done = true;
+    clearTimeout(timer);
+    document.removeEventListener('visibilitychange', onVisibility);
+    window.removeEventListener('blur', onBlur);
+    if (openWeb) window.open(webUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  // App opened → window loses focus (desktop) or page becomes hidden (mobile)
+  const onBlur = () => finish(false);
+  const onVisibility = () => { if (document.hidden) finish(false); };
+
+  // No response after 2.5s → app not installed, open web fallback
+  // Longer window needed on Windows: browser shows "Open app?" dialog before
+  // switching focus, so blur/visibilitychange fire after the user confirms.
+  const timer = setTimeout(() => finish(true), 2500);
+
+  window.addEventListener('blur', onBlur, { once: true });
+  document.addEventListener('visibilitychange', onVisibility);
+
+  // Click a hidden <a> to invoke the URI scheme without navigating the current page
+  const a = document.createElement('a');
+  a.href = scheme;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  requestAnimationFrame(() => a.remove());
+}
+
 interface RecommendationCardProps {
   recommendation: Recommendation;
   index: number;
@@ -58,6 +111,7 @@ export default function RecommendationCard({ recommendation, index }: Recommenda
   }, [artist, album]);
 
   const links = cardData?.links ?? fallbackLinks;
+  const searchQuery = `${artist} ${album}`;
 
   useEffect(() => {
     const params = new URLSearchParams({ artist, album });
@@ -177,7 +231,11 @@ export default function RecommendationCard({ recommendation, index }: Recommenda
               rel="noopener noreferrer"
               title={label}
               className="opacity-60 hover:opacity-100 transition-opacity duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-sm"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openStreamingLink(key, links[key], searchQuery);
+              }}
             >
               <Icon size={20} />
             </a>
