@@ -70,7 +70,7 @@ async function fetchAlbumTags(artist: string, album: string, apiKey: string): Pr
 
     return filtered
       .map((t) => ({ name: t.name, weight: Math.round((t.count / maxCount) * 100) }))
-      .slice(0, 10);
+      .slice(0, 8);
   } catch {
     return [];
   }
